@@ -1,3 +1,4 @@
 /a.out
 /x11-blocker-test
 *.o
+*.so
