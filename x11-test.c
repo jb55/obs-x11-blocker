@@ -7,42 +7,27 @@
 
 int main ()
 {
-    Display* d = XOpenDisplay(NULL);
-    Window root = DefaultRootWindow(d);
-    Window curFocus;
-    char buf[17];
-    KeySym ks;
-    XComposeStatus comp;
-    int len;
-    int revert;
+	Display* d = XOpenDisplay(NULL);
+	/* Window root = DefaultRootWindow(d); */
+	XClassHint chint;
+	Window curFocus;
+	int revert;
 
-    XGetInputFocus (d, &curFocus, &revert);
-    XSelectInput(d, curFocus, );
+	XGetInputFocus (d, &curFocus, &revert);
+	XSelectInput(d, curFocus, SubstructureNotifyMask);
 
-    while (1)
-    {
-        XEvent ev;
-        XNextEvent(d, &ev);
-        switch (ev.type)
-        {
-            case UnmapNotify:
-                ev.xunmap.window
-                printf ("%s unmapped\n", wname);
-                break;
+	while (1)
+	{
+		XEvent ev;
+		XNextEvent(d, &ev);
+		switch (ev.type)
+		{
+		case UnmapNotify:
+			XGetClassHint(d, ev.xunmap.window, &chint);
+			/* ev.xunmap.window */
+			printf ("%s unmapped\n", chint.res_name);
+			break;
+		}
 
-            case KeyPress:
-                printf ("Got key!\n");
-                len = XLookupString(&ev.xkey, buf, 16, &ks, &comp);
-                if (len > 0 && isprint(buf[0]))
-                {
-                    buf[len]=0;
-                    printf("String is: %s\n", buf);
-                }
-                else
-                {
-                    printf ("Key is: %d\n", (int)ks);
-                }
-        }
-
-    }
+	}
 }
