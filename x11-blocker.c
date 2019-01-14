@@ -36,7 +36,6 @@ struct x11_blocker_source {
 	pthread_t thread;
 	pthread_mutex_t mutex;
 	bool activated, listening;
-
 	float        update_time_elapsed;
 	time_t       file_timestamp;
 	char         *file; // image to draw over window
@@ -68,7 +67,7 @@ static void add_blocked_window(struct darray *array, const char *name)
 static const char *x11_blocker_source_get_name(void *unused)
 {
 	UNUSED_PARAMETER(unused);
-	return obs_module_text("X11Blocker");
+	return obs_module_text("X11 Blocker");
 }
 
 
@@ -305,7 +304,8 @@ static void x11_blocker_source_unload(struct x11_blocker_source *context)
 {
 	printf("x11-blocker-unload\n");
 	obs_enter_graphics();
-	gs_image_file_free(&context->image);
+	if (context->image.loaded)
+		gs_image_file_free(&context->image);
 	obs_leave_graphics();
 }
 
@@ -317,6 +317,9 @@ static void x11_blocker_source_update(void *data, obs_data_t *settings)
 	obs_data_array_t *array;
 
 	printf("x11-blocker-update\n");
+
+	if (!settings)
+		return;
 
 	context->file = obs_data_get_string(settings, S_FILE);
 	array = obs_data_get_array(settings, S_WINDOWS);
@@ -359,10 +362,9 @@ static void x11_blocker_source_destroy(void *data)
 
 	if (context->thread)
 		pthread_cancel(context->thread);
+
 	context->listening = false;
 
-	if (context->file)
-		bfree(context->file);
 	bfree(context);
 }
 
@@ -531,16 +533,22 @@ bool obs_module_load(void)
 
 int main ()
 {
-	struct x11_blocker_source ctx;
-	da_init(ctx.blocked_windows);
+	struct x11_blocker_source *ctx =
+		bzalloc(sizeof(struct x11_blocker_source));
+
+	x11_blocker_source_create(NULL, NULL);
+
+	da_init(ctx->blocked_windows);
 	const char *signal = "signal";
 	const char *skype  = "skype";
 	const char *skype2  = "skypeforlinux";
 
-	da_push_back(ctx.blocked_windows, &skype);
-	da_push_back(ctx.blocked_windows, &skype2);
-	ctx.window_count = 0;
-	x11_blocker_listen(&ctx);
+	da_push_back(ctx->blocked_windows, &signal);
+	da_push_back(ctx->blocked_windows, &skype);
+	da_push_back(ctx->blocked_windows, &skype2);
+
+	x11_blocker_start_listener(ctx);
+	x11_blocker_source_destroy(ctx);
 }
 
 
