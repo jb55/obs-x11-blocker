@@ -38,7 +38,7 @@ struct x11_blocker_source {
 	bool activated, listening;
 	float        update_time_elapsed;
 	time_t       file_timestamp;
-	char         *file; // image to draw over window
+	const char   *file; // image to draw over window
 
 	DARRAY(char*) blocked_windows;
 
@@ -188,11 +188,9 @@ static void *x11_blocker_listen(void *data)
 	struct x11_blocker_source *ctx = data;
 
 	// TODO: close display on unload
-	Status res;
 	Display* d = XOpenDisplay(NULL);
 	Window root = DefaultRootWindow(d);
-	XClassHint chint;
-	Window curFocus, wroot;
+	Window curFocus;
 	int revert;
 
 	XGetInputFocus (d, &curFocus, &revert);
@@ -270,7 +268,7 @@ static inline void fill_texture(uint32_t *pixels, uint32_t pixel)
 
 static void x11_blocker_source_load(struct x11_blocker_source *context)
 {
-	char *file = context->file;
+	const char *file = context->file;
 	printf("x11-blocker-load\n");
 
 	if (file && *file) {
@@ -447,7 +445,7 @@ static void x11_blocker_source_render(void *data, gs_effect_t *effect)
 
 static void x11_blocker_source_tick(void *data, float seconds)
 {
-	struct x11_blocker_source *context = data;
+	/* struct x11_blocker_source *context = data; */
 }
 
 static void x11_blocker_source_activate(void *data)
