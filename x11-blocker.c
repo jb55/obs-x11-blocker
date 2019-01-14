@@ -140,14 +140,16 @@ static void map_window(struct x11_blocker_source *ctx,
 	if (is_new_window) {
 		w->do_unmap = 0;
 		strncpy(w->name, chint.res_name, sizeof(w->name));
-		printf("mapping "); print_window(w);
 	}
 
 	w->handle = window;
 
 	static const int is_mapped = 1;
 	update_window(ctx, d, w, is_mapped);
-	/* printf("mapping "); print_window(w); */
+
+	if (is_new_window) {
+		printf("mapping "); print_window(w);
+	}
 }
 
 static void unmap_window(struct x11_blocker_source *ctx, Window window)
@@ -177,7 +179,8 @@ static void remove_window(struct x11_blocker_source *ctx, Window window)
 
 	// remove window
 	printf("removing "); print_window(w);
-	memmove(w, &ctx->windows[ind+1], sizeof(*w) * (ctx->window_count-- - ind - 1));
+	if (ctx->window_count > 0)
+		memmove(w, &ctx->windows[ind+1], sizeof(*w) * ((ctx->window_count--) - ind - 1));
 }
 
 static void *x11_blocker_listen(void *data)
@@ -201,6 +204,10 @@ static void *x11_blocker_listen(void *data)
 		XNextEvent(d, &ev);
 		switch (ev.type)
 		{
+		case CreateNotify:
+			map_window(ctx, d, ev.xcreatewindow.window);
+			break;
+
 		case DestroyNotify:
 			remove_window(ctx, ev.xdestroywindow.window);
 			break;
@@ -420,7 +427,7 @@ static void x11_blocker_source_render(void *data, gs_effect_t *effect)
 		w = &context->windows[i];
 
 		// take a frame to unmap
-		if (w->do_unmap == 0) {
+		if (--w->do_unmap == 0) {
 			w->is_mapped = 0;
 			w->do_unmap = unmap_frames;
 		}
@@ -542,13 +549,14 @@ int main ()
 	const char *signal = "signal";
 	const char *skype  = "skype";
 	const char *skype2  = "skypeforlinux";
+	const char *dmenu  = "dmenu";
 
 	da_push_back(ctx->blocked_windows, &signal);
 	da_push_back(ctx->blocked_windows, &skype);
 	da_push_back(ctx->blocked_windows, &skype2);
+	da_push_back(ctx->blocked_windows, &dmenu);
 
-	x11_blocker_start_listener(ctx);
-	x11_blocker_source_destroy(ctx);
+	x11_blocker_listen(ctx);
 }
 
 
