@@ -18,6 +18,8 @@
 #define S_WINDOWS   "windows"
 #define S_FILE      "file"
 
+static int unmap_frames = 4;
+
 struct window {
 	int is_mapped;
 	int do_unmap;
@@ -160,7 +162,7 @@ static void unmap_window(struct x11_blocker_source *ctx, Window window)
 	w = &ctx->windows[ind];
 
 	printf("unmapping "); print_window(w);
-	w->do_unmap = 1;
+	w->do_unmap = unmap_frames;
 }
 
 
@@ -410,15 +412,15 @@ static void x11_blocker_source_render(void *data, gs_effect_t *effect)
 		return;
 
 	/* gs_effect_loop(effect, "Draw"); */
-	static const int buffer = 10;
+	static const int buffer = 50;
 
 	for (int i = 0; i < context->window_count; i++) {
 		w = &context->windows[i];
 
 		// take a frame to unmap
-		if (w->do_unmap) {
+		if (w->do_unmap == 0) {
 			w->is_mapped = 0;
-			w->do_unmap = 0;
+			w->do_unmap = unmap_frames;
 		}
 		else if (w->is_mapped) {
 			obs_source_draw(context->image.texture,
