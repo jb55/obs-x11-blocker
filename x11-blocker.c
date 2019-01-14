@@ -177,7 +177,7 @@ static void remove_window(struct x11_blocker_source *ctx, Window window)
 
 	// remove window
 	printf("removing "); print_window(w);
-	memmove(w, &ctx->windows[ind+1], sizeof(*w) * (ctx->window_count - ind - 1));
+	memmove(w, &ctx->windows[ind+1], sizeof(*w) * (ctx->window_count-- - ind - 1));
 }
 
 static void *x11_blocker_listen(void *data)
