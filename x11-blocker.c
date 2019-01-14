@@ -20,6 +20,7 @@
 
 struct window {
 	int is_mapped;
+	int do_unmap;
 	unsigned int width, height;
 	int x, y;
 	unsigned int border_width;
@@ -136,7 +137,7 @@ static void map_window(struct x11_blocker_source *ctx,
 		          : &ctx->windows[ind];
 
 	if (is_new_window) {
-
+		w->do_unmap = 0;
 		strncpy(w->name, chint.res_name, sizeof(w->name));
 		printf("mapping "); print_window(w);
 	}
@@ -159,7 +160,7 @@ static void unmap_window(struct x11_blocker_source *ctx, Window window)
 	w = &ctx->windows[ind];
 
 	printf("unmapping "); print_window(w);
-	w->is_mapped = 0;
+	w->do_unmap = 1;
 }
 
 
@@ -413,9 +414,17 @@ static void x11_blocker_source_render(void *data, gs_effect_t *effect)
 
 	for (int i = 0; i < context->window_count; i++) {
 		w = &context->windows[i];
-		obs_source_draw(context->image.texture,
-				w->x - buffer, w->y - buffer,
-				w->width + buffer * 2, w->height + buffer * 2, 0);
+
+		// take a frame to unmap
+		if (w->do_unmap) {
+			w->is_mapped = 0;
+			w->do_unmap = 0;
+		}
+		else if (w->is_mapped) {
+			obs_source_draw(context->image.texture,
+					w->x - buffer, w->y - buffer,
+					w->width + buffer * 2, w->height + buffer * 2, 0);
+		}
 	}
 
 	/* gs_effect_set_texture(gs_effect_get_param_by_name(effect, "image"), */
