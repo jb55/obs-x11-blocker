@@ -427,9 +427,8 @@ static void x11_blocker_source_render(void *data, gs_effect_t *effect)
 		w = &context->windows[i];
 
 		// take a frame to unmap
-		if (--w->do_unmap == 0) {
+		if (w->do_unmap != 0 && --w->do_unmap == 0) {
 			w->is_mapped = 0;
-			w->do_unmap = unmap_frames;
 		}
 		else if (w->is_mapped) {
 			obs_source_draw(context->image.texture,
