@@ -213,7 +213,7 @@ static void *x11_blocker_listen(void *data)
 			break;
 
 		case ConfigureNotify:
-			map_window(ctx, d, ev.xgravity.window);
+			map_window(ctx, d, ev.xconfigure.window);
 			break;
 
 		case VisibilityNotify:
